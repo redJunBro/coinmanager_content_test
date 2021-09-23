@@ -2,28 +2,25 @@ import queue
 from rest_framework.filters import SearchFilter
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-
 from .serializer import *
-from .models import Content
+from .models import *
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .permissions import *
 
 
-
-
-
 class ContentViewSet(viewsets.ModelViewSet):
     queryset = Content.objects.all().order_by('created')
     serializer_class = ContentSerializer
-    #authentication_classes = [IsAuthenticated]
+    #authentication_classes = [IsAuthenticated] # 권한 ( 로그인 한 사람만 )
     permission_classes = [
         IsAuthorOrReadonly
     ]
 
-    # filter_backends = [SearchFilter]
-    # search_fields = ['id']
+    # filter_backends = [SearchFilter]  ( search 기능 )
+    # search_fields = ['id'] # search 조건
 
     # url : post/jinseong/
     @action(detail=False)
@@ -38,6 +35,67 @@ class ContentViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
+
+    def retrieve(self, request, pk=None):
+        queryset = Content.objects.all()
+        content = get_object_or_404(queryset, pk=pk)
+        serializer = ContentdetailSerializer(content)
+        return Response(serializer.data)
+
+
+
+class ContentLike(APIView):
+    def patch(self, request, pk):
+        print(1)
+        content = Like.objects.filter(user=request.user, content=pk)
+        print(content.id)
+
+        if not content:
+                Like.objects.create(user=request.user, content=pk)
+                return Response(data={'is_hearted': True}, status=status.HTTP_201_CREATED)
+        else:
+                content.delete()
+                return Response(data={'is_hearted': False}, status=status.HTTP_201_CREATED)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    #
+    # def update1(self, request, pk=None):
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_create(serializer)
+    #     headers = self.get_success_headers(serializer.data)
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    #
+    # def partial_update(self, request, pk=None):
+    #     print('하위4', self.action)
+    #     pass
+    #
+    # def destroy1(self, request, pk=None):
+    #     print('하위5', self.action)
+    #     pass
     # def list(self, request, *args, **kwargs):
     #     print('하위2',self.action)
     #     queryset = Content.objects.all()
@@ -56,23 +114,3 @@ class ContentViewSet(viewsets.ModelViewSet):
     # def perform_create(self, serializer):
     #     serializer.save()
     #
-    def retrieve(self, request, pk=None):
-        queryset = Content.objects.all()
-        content = get_object_or_404(queryset, pk=pk)
-        serializer = ContentdetailSerializer(content)
-        return Response(serializer.data)
-    #
-    # def update1(self, request, pk=None):
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_create(serializer)
-    #     headers = self.get_success_headers(serializer.data)
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-    #
-    # def partial_update(self, request, pk=None):
-    #     print('하위4', self.action)
-    #     pass
-    #
-    # def destroy1(self, request, pk=None):
-    #     print('하위5', self.action)
-    #     pass
